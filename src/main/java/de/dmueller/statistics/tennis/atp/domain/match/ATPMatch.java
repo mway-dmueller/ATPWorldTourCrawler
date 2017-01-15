@@ -8,8 +8,8 @@ public class ATPMatch {
 	private String id;
 	private String link;
 	private ATPTournamentEvent event;
-	private ATPPlayer winner;
-	private ATPPlayer loser;
+	private ATPPlayer winningPlayer;
+	private ATPPlayer losingPlayer;
 	private ATPResult result;
 	private ATPMatchStatistics statistics;
 	private String round;
@@ -38,20 +38,20 @@ public class ATPMatch {
 		this.event = event;
 	}
 
-	public ATPPlayer getWinner() {
-		return winner;
+	public ATPPlayer getWinningPlayer() {
+		return winningPlayer;
 	}
 
-	public void setWinner(final ATPPlayer winner) {
-		this.winner = winner;
+	public void setWinningPlayer(final ATPPlayer winningPlayer) {
+		this.winningPlayer = winningPlayer;
 	}
 
-	public ATPPlayer getLoser() {
-		return loser;
+	public ATPPlayer getLosingPlayer() {
+		return losingPlayer;
 	}
 
-	public void setLoser(final ATPPlayer loser) {
-		this.loser = loser;
+	public void setLosingPlayer(final ATPPlayer losingPlayer) {
+		this.losingPlayer = losingPlayer;
 	}
 
 	public ATPResult getResult() {
@@ -86,10 +86,10 @@ public class ATPMatch {
 		builder.append(id);
 		builder.append("\n\tlink=");
 		builder.append(link);
-		builder.append("\n\twinner=");
-		builder.append(winner);
-		builder.append(",\n\tloser=");
-		builder.append(loser);
+		builder.append("\n\twinningPlayer=");
+		builder.append(winningPlayer);
+		builder.append(",\n\tlosingPlayer=");
+		builder.append(losingPlayer);
 		builder.append(",\n\tresult=");
 		builder.append(result);
 		builder.append(",\n\tround=");

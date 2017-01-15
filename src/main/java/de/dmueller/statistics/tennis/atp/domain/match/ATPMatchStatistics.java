@@ -1,51 +1,38 @@
 package de.dmueller.statistics.tennis.atp.domain.match;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ATPMatchStatistics {
 
-	private Integer totalSetsPlayed;
-	private Integer totalGamesPlayed;
-	private Integer totalPointsPlayed;
+	@JsonProperty("setNum")
+	private long setNumber;
 
-	private ATPPlayerStatistics playerOneStatistics;
-	private ATPPlayerStatistics playerTwoStatistics;
+	@JsonProperty("playerStats")
+	private ATPPlayerStatistics playerStatistics;
+	@JsonProperty("opponentStats")
+	private ATPPlayerStatistics opponentStats;
 
-	public Integer getTotalSetsPlayed() {
-		return totalSetsPlayed;
+	public long getSetNumber() {
+		return setNumber;
 	}
 
-	public void setTotalSetsPlayed(final Integer totalSetsPlayed) {
-		this.totalSetsPlayed = totalSetsPlayed;
+	public void setSetNumber(final long setNumber) {
+		this.setNumber = setNumber;
 	}
 
-	public Integer getTotalGamesPlayed() {
-		return totalGamesPlayed;
+	public ATPPlayerStatistics getPlayerStatistics() {
+		return playerStatistics;
 	}
 
-	public void setTotalGamesPlayed(final Integer totalGamesPlayed) {
-		this.totalGamesPlayed = totalGamesPlayed;
+	public void setPlayerStatistics(final ATPPlayerStatistics playerStatistics) {
+		this.playerStatistics = playerStatistics;
 	}
 
-	public Integer getTotalPointsPlayed() {
-		return totalPointsPlayed;
+	public ATPPlayerStatistics getOpponentStats() {
+		return opponentStats;
 	}
 
-	public void setTotalPointsPlayed(final Integer totalPointsPlayed) {
-		this.totalPointsPlayed = totalPointsPlayed;
-	}
-
-	public ATPPlayerStatistics getPlayerOneStatistics() {
-		return playerOneStatistics;
-	}
-
-	public void setPlayerOneStatistics(final ATPPlayerStatistics playerOneStatistics) {
-		this.playerOneStatistics = playerOneStatistics;
-	}
-
-	public ATPPlayerStatistics getPlayerTwoStatistics() {
-		return playerTwoStatistics;
-	}
-
-	public void setPlayerTwoStatistics(final ATPPlayerStatistics playerTwoStatistics) {
-		this.playerTwoStatistics = playerTwoStatistics;
+	public void setOpponentStats(final ATPPlayerStatistics opponentStats) {
+		this.opponentStats = opponentStats;
 	}
 }

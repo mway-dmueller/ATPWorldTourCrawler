@@ -1,80 +1,80 @@
 package de.dmueller.statistics.tennis.atp.domain.match;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 public class ATPPlayerStatistics {
 
-	private String playerId;
+	@JsonProperty("IsSetActive")
+	private boolean setActive;
+	@JsonProperty("Time")
+	private String time;
 
-	private ATPSetStatistics setStatistics;
+	@JsonProperty("TotalPointsWonPercentage")
+	private Long totalPointsWonPercentage;
+	@JsonProperty("TotalPointsWonDividend")
+	private Long totalPointsWon;
+	@JsonProperty("TotalPointsWonDivisor")
+	private Long totalPointsPlayed;
 
-	private ATPGameStatistics serviceGameStatistics;
-	private ATPGameStatistics returnGameStatistics;
-	private ATPGameStatistics totalGameStatistics;
+	@JsonUnwrapped
+	private ATPServiceStatistics serviceStatistics;
+	@JsonUnwrapped
+	private ATPReturnStatistics returnStatistics;
 
-	private ATPServicePointStatistics servicePointStatistics;
-	private ATPReturnPointStatistics returnPointStatistics;
-	private ATPPointStatistics totalPointStatistics;
-
-	public String getPlayerId() {
-		return playerId;
+	public boolean isSetActive() {
+		return setActive;
 	}
 
-	public void setPlayerId(final String playerId) {
-		this.playerId = playerId;
+	public void setSetActive(final boolean setActive) {
+		this.setActive = setActive;
 	}
 
-	public ATPSetStatistics getSetStatistics() {
-		return setStatistics;
+	public String getTime() {
+		return time;
 	}
 
-	public void setSetStatistics(final ATPSetStatistics setStatistics) {
-		this.setStatistics = setStatistics;
+	public void setTime(final String time) {
+		this.time = time;
 	}
 
-	public ATPGameStatistics getServiceGameStatistics() {
-		return serviceGameStatistics;
+	public Long getTotalPointsWonPercentage() {
+		return totalPointsWonPercentage;
 	}
 
-	public void setServiceGameStatistics(final ATPGameStatistics serviceGameStatistics) {
-		this.serviceGameStatistics = serviceGameStatistics;
+	public void setTotalPointsWonPercentage(final Long totalPointsWonPercentage) {
+		this.totalPointsWonPercentage = totalPointsWonPercentage;
 	}
 
-	public ATPGameStatistics getReturnGameStatistics() {
-		return returnGameStatistics;
+	public Long getTotalPointsWon() {
+		return totalPointsWon;
 	}
 
-	public void setReturnGameStatistics(final ATPGameStatistics returnGameStatistics) {
-		this.returnGameStatistics = returnGameStatistics;
+	public void setTotalPointsWon(final Long totalPointsWon) {
+		this.totalPointsWon = totalPointsWon;
 	}
 
-	public ATPGameStatistics getTotalGameStatistics() {
-		return totalGameStatistics;
+	public Long getTotalPointsPlayed() {
+		return totalPointsPlayed;
 	}
 
-	public void setTotalGameStatistics(final ATPGameStatistics totalGameStatistics) {
-		this.totalGameStatistics = totalGameStatistics;
+	public void setTotalPointsPlayed(final Long totalPointsPlayed) {
+		this.totalPointsPlayed = totalPointsPlayed;
 	}
 
-	public ATPServicePointStatistics getServicePointStatistics() {
-		return servicePointStatistics;
+	public ATPServiceStatistics getServiceStatistics() {
+		return serviceStatistics;
 	}
 
-	public void setServicePointStatistics(final ATPServicePointStatistics servicePointStatistics) {
-		this.servicePointStatistics = servicePointStatistics;
+	public void setServiceStatistics(final ATPServiceStatistics serviceStatistics) {
+		this.serviceStatistics = serviceStatistics;
 	}
 
-	public ATPReturnPointStatistics getReturnPointStatistics() {
-		return returnPointStatistics;
+	public ATPReturnStatistics getReturnStatistics() {
+		return returnStatistics;
 	}
 
-	public void setReturnPointStatistics(final ATPReturnPointStatistics returnPointStatistics) {
-		this.returnPointStatistics = returnPointStatistics;
-	}
-
-	public ATPPointStatistics getTotalPointStatistics() {
-		return totalPointStatistics;
-	}
-
-	public void setTotalPointStatistics(final ATPPointStatistics totalPointStatistics) {
-		this.totalPointStatistics = totalPointStatistics;
+	public void setReturnStatistics(final ATPReturnStatistics returnStatistics) {
+		this.returnStatistics = returnStatistics;
 	}
 }

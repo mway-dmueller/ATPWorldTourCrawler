@@ -26,6 +26,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
 import de.dmueller.statistics.tennis.atp.domain.TournamentArchiveForYear;
@@ -72,6 +74,8 @@ public class ATPResultsArchiveCrawler implements Runnable {
 	 */
 	private static final Pattern MATCH_STATISTICS_PATTERN = Pattern.compile(
 			"/en/tournaments/([^/]+)/([0-9]+)/([0-9]+)/match-stats/([\\w]+)/([\\w]+)/live/([\\w]+)/match-stats");
+
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	private final Map<String, ATPTournament> tournaments = new HashMap<>();
 
@@ -181,8 +185,8 @@ public class ATPResultsArchiveCrawler implements Runnable {
 					setMatchDetails(match, tableRow);
 
 					match.setEvent(tournamentEvent);
-					match.setWinner(getWinner(tableRow));
-					match.setLoser(getLoser(tableRow));
+					match.setWinningPlayer(getWinner(tableRow));
+					match.setLosingPlayer(getLoser(tableRow));
 					match.setResult(getResult(tableRow));
 
 					final String link = match.getLink();
@@ -485,22 +489,22 @@ public class ATPResultsArchiveCrawler implements Runnable {
 	}
 
 	private ATPMatchStatistics getMatchStatistics(final String url) throws IOException {
-		final ATPMatchStatistics matchStatistics = new ATPMatchStatistics();
 
-		// TODO: fill with life
 		final Connection connection = Jsoup.connect(ATP_WORLD_TOUR_URL + url);
 		final Document document = connection.get();
 
-		final Element matchStatsContainer = document.getElementById("matchStatsContainer");
-		assert Tags.DIV.equalsIgnoreCase(matchStatsContainer.tagName());
+		final Element matchStatsData = document.getElementById("matchStatsData");
+		assert Tags.SCRIPT.equalsIgnoreCase(matchStatsData.tagName());
+		assert matchStatsData.hasAttr(Attributes.TYPE);
+		assert "text/javascript".equals(matchStatsData.attr(Attributes.TYPE));
 
-		final Element matchStatsTable = matchStatsContainer.child(0);
-		assert Tags.TABLE.equalsIgnoreCase(matchStatsTable.tagName());
-		assert "match-stats-table".equals(matchStatsTable.className());
+		final String json = matchStatsData.html();
 
-		final Element matchStatsTableBody = matchStatsTable.child(0);
-		assert Tags.TBODY.equalsIgnoreCase(matchStatsTableBody.tagName());
+		final List<ATPMatchStatistics> list = OBJECT_MAPPER.readValue(json,
+				new TypeReference<List<ATPMatchStatistics>>() {
+				});
+		assert list.size() > 0;
 
-		return matchStatistics;
+		return list.get(0);
 	}
 }
