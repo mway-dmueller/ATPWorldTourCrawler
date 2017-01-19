@@ -8,7 +8,7 @@ import de.dmueller.statistics.tennis.atp.domain.match.ATPMatch;
 public class ATPTournamentEvent {
 
 	private ATPTournament tournament;
-	private String year;
+	private int year;
 	private Date fromDate;
 	private Date toDate;
 	private ATPCourt court;
@@ -23,11 +23,11 @@ public class ATPTournamentEvent {
 		this.tournament = tournament;
 	}
 
-	public String getYear() {
+	public int getYear() {
 		return year;
 	}
 
-	public void setYear(final String year) {
+	public void setYear(final int year) {
 		this.year = year;
 	}
 

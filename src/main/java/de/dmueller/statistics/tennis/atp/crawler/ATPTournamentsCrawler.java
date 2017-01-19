@@ -1,8 +1,10 @@
 package de.dmueller.statistics.tennis.atp.crawler;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +20,7 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.Connection;
@@ -28,44 +31,34 @@ import org.jsoup.select.Elements;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 
+import de.dmueller.statistics.tennis.atp.crawler.util.PlayerUtils;
 import de.dmueller.statistics.tennis.atp.domain.TournamentArchiveForYear;
 import de.dmueller.statistics.tennis.atp.domain.match.ATPMatch;
+import de.dmueller.statistics.tennis.atp.domain.match.ATPMatchPlayer;
 import de.dmueller.statistics.tennis.atp.domain.match.ATPMatchStatistics;
 import de.dmueller.statistics.tennis.atp.domain.match.ATPResult;
 import de.dmueller.statistics.tennis.atp.domain.match.ATPSet;
-import de.dmueller.statistics.tennis.atp.domain.player.ATPPlayer;
 import de.dmueller.statistics.tennis.atp.domain.tournament.ATPCourt;
 import de.dmueller.statistics.tennis.atp.domain.tournament.ATPTotalFinancialCommitment;
 import de.dmueller.statistics.tennis.atp.domain.tournament.ATPTournament;
 import de.dmueller.statistics.tennis.atp.domain.tournament.ATPTournamentEvent;
 import de.dmueller.statistics.tennis.atp.util.Attributes;
+import de.dmueller.statistics.tennis.atp.util.CrawlerConstants;
 import de.dmueller.statistics.tennis.atp.util.Tags;
 
-public class ATPResultsArchiveCrawler implements Runnable {
+public class ATPTournamentsCrawler {
 
-	private static final String WALKOVER = "(W/O)";
-	private static final String RETIRED = "(RET)";
+	// private static final String TOURNAMENT_RESOURCE_HTML = "score_brisbane_339_2016.html";
+	// private static final String TOURNAMENT_RESOURCE_HTML = "score_rio-de-janeiro_96_2016.html";
+	private static final String TOURNAMENT_RESOURCE_HTML = "score_rio-de-janeiro_6932_2016.html";
 
-	// private static final List<String> YEARS = ImmutableList.<String> of("1996", "1997", "1998",
-	// "1999", "2000", "2001",
-	// "2002", "2003", "2004", "2005", "2006", "2007", "2006", "2007", "2008", "2009", "2010",
-	// "2011", "2012",
-	// "2013", "2014", "2015", "2016"// , "2017"
-	// );
-	private static final List<String> YEARS = ImmutableList.<String> of("2016");
+	public static final String YEAR_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
+			+ "/-/ajax/Scores/GetTournamentArchiveForYear/%s";
+	public static final String TOURNAMENT_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
+			+ "/en/scores/archive/%s/%s/%d/results";
 
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
-
-	private static final String ATP_WORLD_TOUR_URL = "http://www.atpworldtour.com";
-	private static final String YEAR_URL_PATTERN = ATP_WORLD_TOUR_URL + "/-/ajax/Scores/GetTournamentArchiveForYear/%s";
-	private static final String TOURNAMENT_URL_PATTERN = ATP_WORLD_TOUR_URL + "/en/scores/archive/%s/%s/%s/results";
-
-	/*
-	 * pattern: /en/players/<player-name>/<player-id>/overview
-	 */
-	private static final Pattern PLAYER_OVERVIEW_PATTERN = Pattern.compile("/en/players/([\\w\\-]+)/([\\w]+)/overview");
+	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
 	/*
 	 * pattern:
@@ -79,43 +72,57 @@ public class ATPResultsArchiveCrawler implements Runnable {
 
 	private final Map<String, ATPTournament> tournaments = new HashMap<>();
 
-	public static void main(final String[] args) {
-		final Thread thread = new Thread(new ATPResultsArchiveCrawler());
-		thread.start();
+	public List<TournamentArchiveForYear> getTournamentArchives(final int year) {
+		final Client client = ClientBuilder.newClient();
+		final WebTarget webTarget = client.target(String.format(YEAR_URL_PATTERN, year));
+
+		final Builder builder = webTarget.request("text/json");
+		return builder.get(new GenericType<List<TournamentArchiveForYear>>() {
+		});
 	}
 
-	@Override
-	public void run() {
-		for (final String year : YEARS) {
-			final Client client = ClientBuilder.newClient();
-			final WebTarget webTarget = client.target(String.format(YEAR_URL_PATTERN, year));
+	public List<ATPTournamentEvent> getAllTournamentEvents() {
+		final List<ATPTournamentEvent> allTournamentEvents = new ArrayList<>();
+		for (final int year : CrawlerConstants.YEARS) {
+			allTournamentEvents.addAll(getTournamentEvents(year));
+		}
 
-			final Builder builder = webTarget.request("text/json");
-			final List<TournamentArchiveForYear> wrapper = builder
-					.get(new GenericType<List<TournamentArchiveForYear>>() {
-					});
+		return allTournamentEvents;
+	}
 
-			for (final TournamentArchiveForYear tournament : wrapper) {
-				try {
-					final ATPTournamentEvent tournamentEvent = getTournamentEvent(tournament, year);
+	public List<ATPTournamentEvent> getTournamentEvents(final int year) {
 
-					System.out.println(tournamentEvent.toString());
-				} catch (final IOException e) {
-					System.out.println(e.getMessage());
-				}
+		final List<TournamentArchiveForYear> wrapper = getTournamentArchives(year);
+
+		final List<ATPTournamentEvent> tournamentEvents = new ArrayList<>();
+		for (final TournamentArchiveForYear tournamentArchiveForYear : wrapper) {
+			try {
+				final String tournamentId = tournamentArchiveForYear.getValue();
+				final String tournamentDescriptor = tournamentArchiveForYear.getDataAttributes().getDescriptor();
+
+				final ATPTournament tournament = getTournament(tournamentId, tournamentDescriptor);
+				final ATPTournamentEvent tournamentEvent = getTournamentEvent(tournament, year);
+
+				System.out.println(tournamentEvent.toString());
+			} catch (final IOException e) {
+				System.out.println(e.getMessage());
 			}
 		}
+
+		return tournamentEvents;
 	}
 
-	public ATPTournamentEvent getTournamentEvent(final TournamentArchiveForYear tournamentArchiveForYear,
-			final String year) throws IOException {
-		final String tournamentId = tournamentArchiveForYear.getValue();
-		final String tournamentDescriptor = tournamentArchiveForYear.getDataAttributes().getDescriptor();
+	private ATPTournament getTournament(final String tournamentId, final String tournamentDescriptor) {
 
 		if (!tournaments.containsKey(tournamentId)) {
 			tournaments.put(tournamentId, new ATPTournament(tournamentId, tournamentDescriptor));
 		}
-		final ATPTournament tournament = tournaments.get(tournamentId);
+
+		return tournaments.get(tournamentId);
+	}
+
+	private ATPTournamentEvent getTournamentEvent(final ATPTournament tournament, final int year)
+			throws IOException {
 
 		final ATPTournamentEvent tournamentEvent = new ATPTournamentEvent();
 		tournamentEvent.setTournament(tournament);
@@ -129,10 +136,12 @@ public class ATPResultsArchiveCrawler implements Runnable {
 
 		final ATPTournament tournament = tournamentEvent.getTournament();
 
-		final String url = String.format(TOURNAMENT_URL_PATTERN, tournament.getDescriptor(), tournament.getId(),
-				tournamentEvent.getYear());
+		final String url = String.format(TOURNAMENT_URL_PATTERN, tournament.getDescriptor(),
+				tournament.getId(), tournamentEvent.getYear());
 
 		final Connection connection = Jsoup.connect(url);
+		connection.timeout(30000); // 30 seconds
+		connection.maxBodySize(0); // unlimited
 		final Document document = connection.get();
 
 		return getMatches(tournamentEvent, document);
@@ -339,7 +348,7 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		final Element a = score.child(0);
 		assert Tags.A.equalsIgnoreCase(a.tagName());
 
-		if (!WALKOVER.equalsIgnoreCase(StringUtils.trim(a.html()))) {
+		if (!CrawlerConstants.WALKOVER.equalsIgnoreCase(StringUtils.trim(a.html()))) {
 			assert a.hasAttr(Attributes.HREF);
 
 			final String href = a.attr(Attributes.HREF);
@@ -352,7 +361,7 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		}
 	}
 
-	private ATPPlayer getWinner(final Element tableRow) {
+	private ATPMatchPlayer getWinner(final Element tableRow) {
 		final Element seed = tableRow.child(0);
 		assert Tags.TD.equalsIgnoreCase(seed.tagName());
 		assert "day-table-seed".equals(seed.className());
@@ -369,7 +378,7 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		return getPlayer(seed, flag, name);
 	}
 
-	private ATPPlayer getLoser(final Element tableRow) {
+	private ATPMatchPlayer getLoser(final Element tableRow) {
 		final Element seed = tableRow.child(4);
 		assert Tags.TD.equalsIgnoreCase(seed.tagName());
 		assert "day-table-seed".equals(seed.className());
@@ -386,8 +395,8 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		return getPlayer(seed, flag, name);
 	}
 
-	private ATPPlayer getPlayer(final Element seed, final Element flag, final Element name) {
-		final ATPPlayer player = new ATPPlayer();
+	private ATPMatchPlayer getPlayer(final Element seed, final Element flag, final Element name) {
+		final ATPMatchPlayer player = new ATPMatchPlayer();
 
 		if (seed.children().size() > 0) {
 			final Element span = seed.child(0);
@@ -402,16 +411,13 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		final Element a = name.child(0);
 		assert Tags.A.equalsIgnoreCase(a.tagName());
 		assert a.hasAttr(Attributes.HREF);
+		assert a.hasText();
 
 		final String href = a.attr(Attributes.HREF);
 
-		final Matcher matcher = PLAYER_OVERVIEW_PATTERN.matcher(href);
-		if (matcher.find()) {
-			player.setId(StringUtils.upperCase(matcher.group(2)));
-			player.setLink(matcher.group(0));
-		}
-
-		player.setName(StringUtils.trim(a.text()));
+		player.setId(PlayerUtils.extractPlayerId(href));
+		player.setLink(href);
+		player.setName(a.text().trim());
 
 		return player;
 	}
@@ -451,7 +457,7 @@ public class ATPResultsArchiveCrawler implements Runnable {
 
 		final String[] setTokens = result.split(" ");
 		for (final String set : setTokens) {
-			if (WALKOVER.equalsIgnoreCase(set) || RETIRED.equalsIgnoreCase(set)) {
+			if (CrawlerConstants.WALKOVER.equalsIgnoreCase(set) || CrawlerConstants.RETIRED.equalsIgnoreCase(set)) {
 				// one of the players has retired
 				atpResult.setWalkover(true);
 			} else if (set.length() > 2) {
@@ -490,7 +496,7 @@ public class ATPResultsArchiveCrawler implements Runnable {
 
 	private ATPMatchStatistics getMatchStatistics(final String url) throws IOException {
 
-		final Connection connection = Jsoup.connect(ATP_WORLD_TOUR_URL + url);
+		final Connection connection = Jsoup.connect(CrawlerConstants.ATP_WORLD_TOUR_URL + url);
 		final Document document = connection.get();
 
 		final Element matchStatsData = document.getElementById("matchStatsData");
@@ -506,5 +512,31 @@ public class ATPResultsArchiveCrawler implements Runnable {
 		assert list.size() > 0;
 
 		return list.get(0);
+	}
+
+	public static void main(final String[] args) {
+
+		final ATPTournament tournament = new ATPTournament("6932", "rio-de-janeiro");
+
+		final ATPTournamentEvent tournamentEvent = new ATPTournamentEvent();
+		tournamentEvent.setTournament(tournament);
+		tournamentEvent.setYear(2016);
+
+		Set<ATPMatch> matches = null;
+		try (InputStream is = ATPTournamentsCrawler.class.getResourceAsStream(TOURNAMENT_RESOURCE_HTML)) {
+			final Document document = Jsoup.parse(IOUtils.toString(is, "UTF-8"));
+
+			final ATPTournamentsCrawler crawler = new ATPTournamentsCrawler();
+			matches = crawler.getMatches(tournamentEvent, document);
+		} catch (final IOException e) {
+			System.err.println(e.getMessage());
+		}
+
+		assert matches.size() == 43;
+
+		System.out.println(tournamentEvent.toString());
+		for (final ATPMatch match : matches) {
+			System.out.println(match);
+		}
 	}
 }

@@ -1,6 +1,5 @@
 package de.dmueller.statistics.tennis.atp.domain.match;
 
-import de.dmueller.statistics.tennis.atp.domain.player.ATPPlayer;
 import de.dmueller.statistics.tennis.atp.domain.tournament.ATPTournamentEvent;
 
 public class ATPMatch {
@@ -8,8 +7,8 @@ public class ATPMatch {
 	private String id;
 	private String link;
 	private ATPTournamentEvent event;
-	private ATPPlayer winningPlayer;
-	private ATPPlayer losingPlayer;
+	private ATPMatchPlayer winningPlayer;
+	private ATPMatchPlayer losingPlayer;
 	private ATPResult result;
 	private ATPMatchStatistics statistics;
 	private String round;
@@ -38,19 +37,19 @@ public class ATPMatch {
 		this.event = event;
 	}
 
-	public ATPPlayer getWinningPlayer() {
+	public ATPMatchPlayer getWinningPlayer() {
 		return winningPlayer;
 	}
 
-	public void setWinningPlayer(final ATPPlayer winningPlayer) {
+	public void setWinningPlayer(final ATPMatchPlayer winningPlayer) {
 		this.winningPlayer = winningPlayer;
 	}
 
-	public ATPPlayer getLosingPlayer() {
+	public ATPMatchPlayer getLosingPlayer() {
 		return losingPlayer;
 	}
 
-	public void setLosingPlayer(final ATPPlayer losingPlayer) {
+	public void setLosingPlayer(final ATPMatchPlayer losingPlayer) {
 		this.losingPlayer = losingPlayer;
 	}
 
