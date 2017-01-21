@@ -70,7 +70,17 @@ public class ATPTournamentsCrawler {
 
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-	private final Map<String, ATPTournament> tournaments = new HashMap<>();
+	private int timeout = 30000; // 30 seconds
+	private int maxBodySize = 0; // unlimited body size
+
+	public ATPTournamentsCrawler() {
+		// use the default connection settings
+	}
+
+	public ATPTournamentsCrawler(final int timeout, final int maxBodySize) {
+		this.timeout = timeout;
+		this.maxBodySize = maxBodySize;
+	}
 
 	public List<TournamentArchiveForYear> getTournamentArchives(final int year) {
 		final Client client = ClientBuilder.newClient();
@@ -114,6 +124,7 @@ public class ATPTournamentsCrawler {
 
 	private ATPTournament getTournament(final String tournamentId, final String tournamentDescriptor) {
 
+		final Map<String, ATPTournament> tournaments = new HashMap<>();
 		if (!tournaments.containsKey(tournamentId)) {
 			tournaments.put(tournamentId, new ATPTournament(tournamentId, tournamentDescriptor));
 		}
@@ -137,11 +148,11 @@ public class ATPTournamentsCrawler {
 		final ATPTournament tournament = tournamentEvent.getTournament();
 
 		final String url = String.format(TOURNAMENT_URL_PATTERN, tournament.getDescriptor(),
-				tournament.getId(), tournamentEvent.getYear());
+				tournament.getCode(), tournamentEvent.getYear());
 
 		final Connection connection = Jsoup.connect(url);
-		connection.timeout(30000); // 30 seconds
-		connection.maxBodySize(0); // unlimited
+		connection.timeout(timeout); // 30 seconds
+		connection.maxBodySize(maxBodySize); // unlimited
 		final Document document = connection.get();
 
 		return getMatches(tournamentEvent, document);
@@ -415,7 +426,7 @@ public class ATPTournamentsCrawler {
 
 		final String href = a.attr(Attributes.HREF);
 
-		player.setId(PlayerUtils.extractPlayerId(href));
+		player.setCode(PlayerUtils.extractPlayerCode(href));
 		player.setLink(href);
 		player.setName(a.text().trim());
 
@@ -497,6 +508,8 @@ public class ATPTournamentsCrawler {
 	private ATPMatchStatistics getMatchStatistics(final String url) throws IOException {
 
 		final Connection connection = Jsoup.connect(CrawlerConstants.ATP_WORLD_TOUR_URL + url);
+		connection.timeout(timeout);
+		connection.maxBodySize(maxBodySize);
 		final Document document = connection.get();
 
 		final Element matchStatsData = document.getElementById("matchStatsData");

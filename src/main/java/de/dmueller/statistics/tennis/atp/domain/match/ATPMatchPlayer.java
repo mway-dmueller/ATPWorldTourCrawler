@@ -2,18 +2,18 @@ package de.dmueller.statistics.tennis.atp.domain.match;
 
 public class ATPMatchPlayer {
 
-	private String id;
+	private String code;
 	private String link;
 	private String seed;
 	private String nationality;
 	private String name;
 
-	public String getId() {
-		return id;
+	public String getCode() {
+		return code;
 	}
 
-	public void setId(final String id) {
-		this.id = id;
+	public void setCode(final String code) {
+		this.code = code;
 	}
 
 	public String getLink() {
@@ -51,8 +51,8 @@ public class ATPMatchPlayer {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("ATPPlayer [id=");
-		builder.append(id);
+		builder.append("ATPPlayer [code=");
+		builder.append(code);
 		builder.append(", link=");
 		builder.append(link);
 		builder.append(", seed=");

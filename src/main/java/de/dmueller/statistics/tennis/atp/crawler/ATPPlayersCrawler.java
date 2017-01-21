@@ -70,13 +70,13 @@ public class ATPPlayersCrawler {
 		for (final Date date : dates) {
 			final Set<ATPPlayer> players = getPlayers(date);
 			for (final ATPPlayer player : players) {
-				final String playerId = player.getId();
+				final String playerCode = player.getCode();
 
-				if (allPlayers.containsKey(playerId)) {
-					final ATPPlayer currentPlayer = allPlayers.get(playerId);
+				if (allPlayers.containsKey(playerCode)) {
+					final ATPPlayer currentPlayer = allPlayers.get(playerCode);
 					currentPlayer.getRankings().putAll(player.getRankings());
 				} else {
-					allPlayers.put(playerId, player);
+					allPlayers.put(playerCode, player);
 				}
 			}
 		}
@@ -223,7 +223,7 @@ public class ATPPlayersCrawler {
 
 		final String href = anchor.attr(Attributes.HREF);
 
-		atpPlayer.setId(PlayerUtils.extractPlayerId(href));
+		atpPlayer.setCode(PlayerUtils.extractPlayerCode(href));
 		atpPlayer.setLink(href);
 		atpPlayer.setName(anchor.text());
 	}

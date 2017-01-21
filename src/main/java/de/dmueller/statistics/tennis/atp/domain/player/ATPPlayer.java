@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ATPPlayer {
 
-	private String id;
+	private String code;
 	private String link;
 	private int move;
 	private String country;
@@ -18,12 +18,12 @@ public class ATPPlayer {
 	private int nextBest;
 	private Map<Date, Integer> rankings = new LinkedHashMap<>();
 
-	public String getId() {
-		return id;
+	public String getCode() {
+		return code;
 	}
 
-	public void setId(final String id) {
-		this.id = id;
+	public void setCode(final String code) {
+		this.code = code;
 	}
 
 	public String getLink() {
@@ -110,8 +110,8 @@ public class ATPPlayer {
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("ATPPlayer [");
-		builder.append("\n\tid=");
-		builder.append(id);
+		builder.append("\n\tcode=");
+		builder.append(code);
 		builder.append(",\n\tlink=");
 		builder.append(link);
 		builder.append(",\n\tmove=");

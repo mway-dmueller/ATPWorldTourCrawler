@@ -2,23 +2,23 @@ package de.dmueller.statistics.tennis.atp.domain.tournament;
 
 public class ATPTournament {
 
-	private String id;
+	private String code;
 	private String descriptor;
 	private String name;
 	private String city;
 	private String country;
 
-	public ATPTournament(final String id, final String descriptor) {
-		this.id = id;
+	public ATPTournament(final String code, final String descriptor) {
+		this.code = code;
 		this.descriptor = descriptor;
 	}
 
-	public String getId() {
-		return id;
+	public String getCode() {
+		return code;
 	}
 
-	public void setId(final String id) {
-		this.id = id;
+	public void setCode(final String code) {
+		this.code = code;
 	}
 
 	public String getDescriptor() {
@@ -55,7 +55,7 @@ public class ATPTournament {
 
 	@Override
 	public String toString() {
-		return new StringBuilder("ATPTournament [").append("id=").append(id).append(", name=").append(name)
+		return new StringBuilder("ATPTournament [").append("code=").append(code).append(", name=").append(name)
 				.append(", city=").append(city).append(", country=").append(country).append("]").toString();
 	}
 }

@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 public class PlayerUtils {
 
 	/*
-	 * pattern: /en/players/<player-name>/<player-id>/overview
+	 * pattern: /en/players/<player-name>/<player-code>/overview
 	 */
 	private static final Pattern PLAYER_OVERVIEW_PATTERN = Pattern.compile("/en/players/([\\w\\-]+)/([\\w]+)/overview");
 
@@ -16,7 +16,7 @@ public class PlayerUtils {
 		assert false : "not instantiable";
 	}
 
-	public static final String extractPlayerId(final String link) {
+	public static final String extractPlayerCode(final String link) {
 
 		final Matcher matcher = PLAYER_OVERVIEW_PATTERN.matcher(link);
 		if (!matcher.find()) {
