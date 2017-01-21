@@ -19,6 +19,9 @@ public class Tags {
 	public static final String TD = "td";
 	public static final String TR = "tr";
 
+	public static final String UL = "ul";
+	public static final String LI = "li";
+
 	private Tags() {
 		assert false : "not instantiable";
 	}

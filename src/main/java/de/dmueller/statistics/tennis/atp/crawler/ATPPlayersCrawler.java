@@ -2,9 +2,9 @@ package de.dmueller.statistics.tennis.atp.crawler;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
@@ -19,7 +19,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import de.dmueller.statistics.tennis.atp.crawler.util.DateUtils;
 import de.dmueller.statistics.tennis.atp.crawler.util.PlayerUtils;
 import de.dmueller.statistics.tennis.atp.domain.player.ATPPlayer;
 import de.dmueller.statistics.tennis.atp.util.Attributes;
@@ -28,9 +27,10 @@ import de.dmueller.statistics.tennis.atp.util.Tags;
 
 public class ATPPlayersCrawler {
 
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-	private static final String PLAYER_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
+	private static final String SINGLE_RANKINGS_URL = "http://www.atpworldtour.com/en/rankings/singles";
+	private static final String SINGLE_RANKINGS_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
 			+ "/en/rankings/singles?rankDate=%s&rankRange=1-5000";
 
 	private int timeout = 30000; // 30 seconds
@@ -45,28 +45,53 @@ public class ATPPlayersCrawler {
 		this.maxBodySize = maxBodySize;
 	}
 
-	public List<Date> getDates() {
+	public List<Date> getRankDates() {
 
-		final List<Date> dates = new ArrayList<>();
+		final List<Date> rankDates = new ArrayList<>();
+		try {
+			final Connection connection = Jsoup.connect(SINGLE_RANKINGS_URL);
+			connection.timeout(timeout); // 30 seconds
+			connection.maxBodySize(maxBodySize); // unlimited
+			final Document document = connection.get();
 
-		final Calendar calendar = DateUtils.getLastMonday();
+			final Element filterHolder = document.getElementById("filterHolder");
+			assert Tags.DIV.equalsIgnoreCase(filterHolder.tagName());
 
-		final Date startDate = new GregorianCalendar(1996, 0, 1).getTime(); // 1995.01.01
-		Date date;
-		while ((date = calendar.getTime()).after(startDate)) {
-			dates.add(date);
+			final Elements elements = filterHolder.getElementsByAttributeValue(Attributes.DATA_VALUE, "rankDate");
+			assert elements.size() == 1;
 
-			calendar.add(Calendar.DAY_OF_YEAR, -7);
+			final Element rankDate = elements.first();
+			assert Tags.UL.equalsIgnoreCase(rankDate.tagName());
+
+			final Elements listItems = rankDate.children();
+			for (final Element listItem : listItems) {
+				assert Tags.LI.equalsIgnoreCase(listItem.tagName());
+
+				if (listItem.hasAttr(Attributes.STYLE) && listItem.attr(Attributes.STYLE).equals("display: none")) {
+					continue;
+				}
+
+				assert listItem.hasAttr(Attributes.DATA_VALUE);
+
+				final String dataValue = listItem.attr(Attributes.DATA_VALUE);
+				try {
+					rankDates.add(DATE_FORMAT.parse(dataValue));
+				} catch (final ParseException e) {
+					assert false : "rankDate format has changed";
+				}
+			}
+		} catch (final IOException e) {
+			System.out.println(e.getMessage());
 		}
 
-		return dates;
+		return rankDates;
 	}
 
 	public Set<ATPPlayer> getAllPlayers() {
 
 		final Map<String, ATPPlayer> allPlayers = new LinkedHashMap<>();
 
-		final List<Date> dates = getDates();
+		final List<Date> dates = getRankDates();
 		for (final Date date : dates) {
 			final Set<ATPPlayer> players = getPlayers(date);
 			for (final ATPPlayer player : players) {
@@ -88,7 +113,8 @@ public class ATPPlayersCrawler {
 
 		final Set<ATPPlayer> players = new LinkedHashSet<>();
 		try {
-			final Connection connection = Jsoup.connect(String.format(PLAYER_URL_PATTERN, DATE_FORMAT.format(date)));
+			final Connection connection = Jsoup
+					.connect(String.format(SINGLE_RANKINGS_URL_PATTERN, DATE_FORMAT.format(date)));
 			connection.timeout(timeout); // 30 seconds
 			connection.maxBodySize(maxBodySize); // unlimited
 			final Document document = connection.get();
@@ -263,7 +289,7 @@ public class ATPPlayersCrawler {
 	}
 
 	public static void main(final String[] args) {
-		final List<Date> dates = new ATPPlayersCrawler().getDates();
+		final List<Date> dates = new ATPPlayersCrawler().getRankDates();
 		for (final Date date : dates) {
 			System.out.println(DATE_FORMAT.format(date));
 		}
