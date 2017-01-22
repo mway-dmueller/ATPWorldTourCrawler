@@ -6,7 +6,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -254,10 +253,13 @@ public class ATPPlayersCrawler {
 		atpPlayer.setName(anchor.text());
 	}
 
-	private int getAge(final Element tableCell) {
-		assert tableCell.hasText();
+	private Integer getAge(final Element tableCell) {
+		if (tableCell.hasText()) {
+			return Integer.valueOf(tableCell.text().trim());
+		}
 
-		return Integer.valueOf(tableCell.text().trim());
+		// player's age might be unknown
+		return null;
 	}
 
 	private int getPoints(final Element tableCell) {
@@ -289,13 +291,18 @@ public class ATPPlayersCrawler {
 	}
 
 	public static void main(final String[] args) {
-		final List<Date> dates = new ATPPlayersCrawler().getRankDates();
-		for (final Date date : dates) {
-			System.out.println(DATE_FORMAT.format(date));
-		}
+//		final List<Date> dates = new ATPPlayersCrawler().getRankDates();
+//		for (final Date date : dates) {
+//			System.out.println(DATE_FORMAT.format(date));
+//		}
+//
+//		final ATPPlayersCrawler crawler = new ATPPlayersCrawler();
+//		final Set<ATPPlayer> players = crawler.getPlayers(new GregorianCalendar(2017, 0, 16).getTime());
+//		for (final ATPPlayer player : players) {
+//			System.out.println(player);
+//		}
 
-		final ATPPlayersCrawler crawler = new ATPPlayersCrawler();
-		final Set<ATPPlayer> players = crawler.getPlayers(new GregorianCalendar(2017, 0, 16).getTime());
+		final Set<ATPPlayer> players = new ATPPlayersCrawler().getAllPlayers();
 		for (final ATPPlayer player : players) {
 			System.out.println(player);
 		}

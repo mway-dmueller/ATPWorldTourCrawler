@@ -11,7 +11,7 @@ public class ATPPlayer {
 	private int move;
 	private String country;
 	private String name;
-	private int age;
+	private Integer age; // player's age might be unknown
 	private int points;
 	private int tournamentsPlayed;
 	private int pointsDropping;
@@ -58,11 +58,11 @@ public class ATPPlayer {
 		this.name = name;
 	}
 
-	public int getAge() {
+	public Integer getAge() {
 		return age;
 	}
 
-	public void setAge(final int age) {
+	public void setAge(final Integer age) {
 		this.age = age;
 	}
 
