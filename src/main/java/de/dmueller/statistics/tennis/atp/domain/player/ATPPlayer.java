@@ -1,22 +1,15 @@
 package de.dmueller.statistics.tennis.atp.domain.player;
 
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ATPPlayer {
 
 	private String code;
 	private String link;
-	private int move;
-	private String country;
 	private String name;
-	private Integer age; // player's age might be unknown
-	private int points;
-	private int tournamentsPlayed;
-	private int pointsDropping;
-	private int nextBest;
-	private Map<Date, Integer> rankings = new LinkedHashMap<>();
+	private String country;
+	private List<ATPRanking> rankings = new ArrayList<>();
 
 	public String getCode() {
 		return code;
@@ -34,12 +27,12 @@ public class ATPPlayer {
 		this.link = link;
 	}
 
-	public int getMove() {
-		return move;
+	public String getName() {
+		return name;
 	}
 
-	public void setMove(final int move) {
-		this.move = move;
+	public void setName(final String name) {
+		this.name = name;
 	}
 
 	public String getCountry() {
@@ -50,59 +43,11 @@ public class ATPPlayer {
 		this.country = country;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(final String name) {
-		this.name = name;
-	}
-
-	public Integer getAge() {
-		return age;
-	}
-
-	public void setAge(final Integer age) {
-		this.age = age;
-	}
-
-	public int getPoints() {
-		return points;
-	}
-
-	public void setPoints(final int points) {
-		this.points = points;
-	}
-
-	public int getTournamentsPlayed() {
-		return tournamentsPlayed;
-	}
-
-	public void setTournamentsPlayed(final int tournamentsPlayed) {
-		this.tournamentsPlayed = tournamentsPlayed;
-	}
-
-	public int getPointsDropping() {
-		return pointsDropping;
-	}
-
-	public void setPointsDropping(final int pointsDropping) {
-		this.pointsDropping = pointsDropping;
-	}
-
-	public int getNextBest() {
-		return nextBest;
-	}
-
-	public void setNextBest(final int nextBest) {
-		this.nextBest = nextBest;
-	}
-
-	public Map<Date, Integer> getRankings() {
+	public List<ATPRanking> getRankings() {
 		return rankings;
 	}
 
-	public void setRankings(final Map<Date, Integer> rankings) {
+	public void setRankings(final List<ATPRanking> rankings) {
 		this.rankings = rankings;
 	}
 
@@ -114,22 +59,10 @@ public class ATPPlayer {
 		builder.append(code);
 		builder.append(",\n\tlink=");
 		builder.append(link);
-		builder.append(",\n\tmove=");
-		builder.append(move);
 		builder.append(",\n\tcountry=");
 		builder.append(country);
 		builder.append(",\n\tname=");
 		builder.append(name);
-		builder.append(",\n\tage=");
-		builder.append(age);
-		builder.append(",\n\tpoints=");
-		builder.append(points);
-		builder.append(",\n\ttournamentsPlayed=");
-		builder.append(tournamentsPlayed);
-		builder.append(",\n\tpointsDropping=");
-		builder.append(pointsDropping);
-		builder.append(",\n\tnextBest=");
-		builder.append(nextBest);
 		builder.append(",\n\trankings=");
 		builder.append(rankings);
 		builder.append("]");

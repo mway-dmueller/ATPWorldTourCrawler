@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,6 +21,8 @@ import org.jsoup.select.Elements;
 
 import de.dmueller.statistics.tennis.atp.crawler.util.PlayerUtils;
 import de.dmueller.statistics.tennis.atp.domain.player.ATPPlayer;
+import de.dmueller.statistics.tennis.atp.domain.player.ATPPlayerRanking;
+import de.dmueller.statistics.tennis.atp.domain.player.ATPRanking;
 import de.dmueller.statistics.tennis.atp.util.Attributes;
 import de.dmueller.statistics.tennis.atp.util.CrawlerConstants;
 import de.dmueller.statistics.tennis.atp.util.Tags;
@@ -30,7 +33,9 @@ public class ATPPlayersCrawler {
 
 	private static final String SINGLE_RANKINGS_URL = "http://www.atpworldtour.com/en/rankings/singles";
 	private static final String SINGLE_RANKINGS_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
-			+ "/en/rankings/singles?rankDate=%s&rankRange=1-5000";
+			+ "/en/rankings/singles?rankDate=%s&rankRange=%s";
+
+	private static final String DEFAULT_RANGE = "1-5000";
 
 	private int timeout = 30000; // 30 seconds
 	private int maxBodySize = 0; // unlimited body size
@@ -92,33 +97,58 @@ public class ATPPlayersCrawler {
 
 		final List<Date> dates = getRankDates();
 		for (final Date date : dates) {
-			final Set<ATPPlayer> players = getPlayers(date);
-			for (final ATPPlayer player : players) {
-				final String playerCode = player.getCode();
+			final Set<ATPPlayerRanking> playerRankings = getPlayerRankings(date);
+			for (final ATPPlayerRanking playerRanking : playerRankings) {
+				final String playerCode = playerRanking.getCode();
 
-				if (allPlayers.containsKey(playerCode)) {
-					final ATPPlayer currentPlayer = allPlayers.get(playerCode);
-					currentPlayer.getRankings().putAll(player.getRankings());
-				} else {
+				if (!allPlayers.containsKey(playerCode)) {
+					final ATPPlayer player = new ATPPlayer();
+					player.setCode(playerCode);
+					player.setLink(playerRanking.getLink());
+					player.setName(playerRanking.getName());
+					player.setCountry(playerRanking.getCountry());
+
 					allPlayers.put(playerCode, player);
 				}
+
+				final ATPPlayer currentPlayer = allPlayers.get(playerCode);
+
+				final ATPRanking ranking = new ATPRanking();
+				ranking.setRankDate(playerRanking.getRankDate());
+				ranking.setMove(playerRanking.getMove());
+				ranking.setAge(playerRanking.getAge());
+				ranking.setPoints(playerRanking.getPoints());
+				ranking.setTournamentsPlayed(playerRanking.getTournamentsPlayed());
+				ranking.setPointsDropping(playerRanking.getPointsDropping());
+				ranking.setNextBest(playerRanking.getNextBest());
+				ranking.setRanking(playerRanking.getRanking());
+
+				currentPlayer.getRankings().add(ranking);
 			}
 		}
 
 		return new LinkedHashSet<>(allPlayers.values());
 	}
 
-	public Set<ATPPlayer> getPlayers(final Date date) {
+	public Set<ATPPlayerRanking> getPlayerRankings(final Date date) {
+		return getPlayerRankings(date, DEFAULT_RANGE);
+	}
 
-		final Set<ATPPlayer> players = new LinkedHashSet<>();
+	private Set<ATPPlayerRanking> getPlayerRankings(final Date date, final String range) {
+
+		final Set<ATPPlayerRanking> playerRankings = new LinkedHashSet<>();
 		try {
 			final Connection connection = Jsoup
-					.connect(String.format(SINGLE_RANKINGS_URL_PATTERN, DATE_FORMAT.format(date)));
+					.connect(String.format(SINGLE_RANKINGS_URL_PATTERN, DATE_FORMAT.format(date), range));
 			connection.timeout(timeout); // 30 seconds
 			connection.maxBodySize(maxBodySize); // unlimited
 			final Document document = connection.get();
 
 			final Element singlesRanking = document.getElementById("singlesRanking");
+			if (singlesRanking == null && date.equals(new GregorianCalendar(1998, 9, 5).getTime())) {
+				return getPlayerRankings(date, "1-1296"); // workaround for 1998.10.05
+			}
+
 			assert Tags.DIV.equalsIgnoreCase(singlesRanking.tagName());
 
 			final Element rankingDetailAjaxContainer = singlesRanking.getElementById("rankingDetailAjaxContainer");
@@ -138,7 +168,8 @@ public class ATPPlayersCrawler {
 
 			final Elements tableRows = rankingTableBody.children();
 			for (final Element tableRow : tableRows) {
-				final ATPPlayer player = new ATPPlayer();
+				final ATPPlayerRanking player = new ATPPlayerRanking();
+				player.setRankDate(date);
 
 				final Elements tableCells = tableRow.children();
 				for (final Element tableCell : tableCells) {
@@ -157,7 +188,7 @@ public class ATPPlayersCrawler {
 							rank = rank.substring(0, rank.length() - 1);
 						}
 
-						player.getRankings().put(date, Integer.valueOf(rank));
+						player.setRanking(Integer.valueOf(rank));
 						break;
 					case "move-cell":
 						player.setMove(getMove(tableCell));
@@ -189,13 +220,13 @@ public class ATPPlayersCrawler {
 					}
 				}
 
-				players.add(player);
+				playerRankings.add(player);
 			}
 		} catch (final IOException e) {
 			System.out.println(e.getMessage());
 		}
 
-		return players;
+		return playerRankings;
 	}
 
 	private int getMove(final Element tableCell) {
@@ -239,7 +270,7 @@ public class ATPPlayersCrawler {
 		return image.attr(Attributes.ALT);
 	}
 
-	private void setPlayerDetails(final ATPPlayer atpPlayer, final Element tableCell) {
+	private void setPlayerDetails(final ATPPlayerRanking atpPlayer, final Element tableCell) {
 		assert tableCell.children().size() == 1;
 
 		final Element anchor = tableCell.child(0);
@@ -306,5 +337,10 @@ public class ATPPlayersCrawler {
 		for (final ATPPlayer player : players) {
 			System.out.println(player);
 		}
+
+//		final Set<ATPPlayer> players = new ATPPlayersCrawler().getPlayers(new GregorianCalendar(1998, 9, 5).getTime());
+//		for (final ATPPlayer player : players) {
+//			System.out.println(player);
+//		}
 	}
 }
