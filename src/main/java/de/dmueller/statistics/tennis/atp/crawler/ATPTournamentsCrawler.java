@@ -49,8 +49,6 @@ import de.dmueller.statistics.tennis.atp.util.Tags;
 
 public class ATPTournamentsCrawler {
 
-	// private static final String TOURNAMENT_RESOURCE_HTML = "score_brisbane_339_2016.html";
-	// private static final String TOURNAMENT_RESOURCE_HTML = "score_rio-de-janeiro_96_2016.html";
 	private static final String TOURNAMENT_RESOURCE_HTML = "score_rio-de-janeiro_6932_2016.html";
 
 	public static final String YEAR_URL_PATTERN = CrawlerConstants.ATP_WORLD_TOUR_URL
